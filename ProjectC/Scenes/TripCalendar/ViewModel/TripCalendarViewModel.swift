@@ -12,6 +12,12 @@ final class TripCalendarViewModel {
   @Published private(set) var rangeStart: Date?
   @Published private(set) var rangeEnd: Date?
 
+  /// 선택 상태가 갱신을 마친 뒤(커밋 후) 셀 다시 그리기를 알리는 신호.
+  /// `@Published`는 willSet 시점에 발행되어 구독부에서 새 값을 못 읽으므로,
+  /// 상태를 모두 반영한 다음 이 신호로 reconfigure를 트리거한다.
+  var selectionChanged: AnyPublisher<Void, Never> { selectionChangedSubject.eraseToAnyPublisher() }
+  private let selectionChangedSubject = PassthroughSubject<Void, Never>()
+
   private let calendar: Calendar
 
   init(destination: Destination, calendar: Calendar = .current, referenceDate: Date = Date()) {
@@ -81,6 +87,8 @@ final class TripCalendarViewModel {
         rangeEnd = date          // date == start → 당일치기, date > start → 기간 확정
       }
     }
+
+    selectionChangedSubject.send()
   }
 
   func goToPreviousMonth() {

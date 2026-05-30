@@ -128,9 +128,8 @@ final class TripCalendarViewController: UIViewController {
       .sink { [weak self] _ in self?.applySnapshot() }
       .store(in: &cancellables)
 
-    Publishers.CombineLatest(viewModel.$rangeStart, viewModel.$rangeEnd)
-      .dropFirst()
-      .sink { [weak self] _ in self?.reconfigureAll() }
+    viewModel.selectionChanged
+      .sink { [weak self] in self?.reconfigureAll() }
       .store(in: &cancellables)
 
     viewModel.monthTitle
