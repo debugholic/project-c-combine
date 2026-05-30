@@ -87,9 +87,18 @@ final class TripCalendarViewController: UIViewController {
     super.viewDidLoad()
     view.backgroundColor = .systemBackground
     navigationItem.title = viewModel.destination.name
+    navigationItem.rightBarButtonItem = UIBarButtonItem(
+      title: "완료", style: .done, target: self, action: #selector(didTapComplete)
+    )
+    navigationItem.rightBarButtonItem?.isEnabled = false
     setupViews()
     setupDataSource()
     bindViewModel()
+  }
+
+  @objc private func didTapComplete() {
+    viewModel.complete()
+    navigationController?.popToRootViewController(animated: true)
   }
 
   // MARK: - Diffable Data Source
@@ -142,6 +151,10 @@ final class TripCalendarViewController: UIViewController {
 
     viewModel.summaryText
       .sink { [weak self] text in self?.summaryLabel.text = text }
+      .store(in: &cancellables)
+
+    viewModel.canComplete
+      .sink { [weak self] enabled in self?.navigationItem.rightBarButtonItem?.isEnabled = enabled }
       .store(in: &cancellables)
 
     // Inputs

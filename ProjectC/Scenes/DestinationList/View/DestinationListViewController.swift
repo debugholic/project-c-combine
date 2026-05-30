@@ -9,6 +9,9 @@ final class DestinationListViewController: UIViewController {
   private var dataSource: UITableViewDiffableDataSource<DestinationSection, Destination>!
   private var cancellables = Set<AnyCancellable>()
 
+  /// 여행지를 선택하면 호출된다. 상위(목록)가 다음 화면 전환을 담당한다.
+  var onSelect: ((Destination) -> Void)?
+
   private lazy var tableView: UITableView = {
     let tableView = UITableView(frame: .zero, style: .insetGrouped)
     tableView.delegate = self
@@ -79,8 +82,6 @@ extension DestinationListViewController: UITableViewDelegate {
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     tableView.deselectRow(at: indexPath, animated: true)
     guard let destination = dataSource.itemIdentifier(for: indexPath) else { return }
-    let calendarViewModel = TripCalendarViewModel(destination: destination)
-    let calendarViewController = TripCalendarViewController(viewModel: calendarViewModel)
-    navigationController?.pushViewController(calendarViewController, animated: true)
+    onSelect?(destination)
   }
 }

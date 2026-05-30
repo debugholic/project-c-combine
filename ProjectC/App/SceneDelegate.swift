@@ -11,8 +11,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     guard let windowScene = scene as? UIWindowScene else { return }
 
     let window = UIWindow(windowScene: windowScene)
+    let store = TripStore()
     window.rootViewController = UINavigationController(
-      rootViewController: DestinationListViewController(viewModel: DestinationListViewModel())
+      rootViewController: TripListViewController(viewModel: TripListViewModel(store: store), store: store)
     )
     window.makeKeyAndVisible()
     self.window = window

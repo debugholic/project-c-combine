@@ -4,6 +4,7 @@ import Foundation
 final class TripCalendarViewModel {
 
   let destination: Destination
+  private let store: TripStore
 
   // MARK: - Outputs (state)
 
@@ -20,8 +21,9 @@ final class TripCalendarViewModel {
 
   private let calendar: Calendar
 
-  init(destination: Destination, calendar: Calendar = .current, referenceDate: Date = Date()) {
+  init(destination: Destination, store: TripStore, calendar: Calendar = .current, referenceDate: Date = Date()) {
     self.destination = destination
+    self.store = store
     var cal = calendar
     cal.locale = Locale(identifier: "en_US")
     self.calendar = cal
@@ -54,19 +56,16 @@ final class TripCalendarViewModel {
       .map { [destination, calendar] start, end in
         guard let start else { return "여행 기간을 선택하세요" }
         guard let end else { return "종료일을 선택하세요" }
-
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.dateFormat = "MMM d"
-        let trip = Trip(destination: destination, startDate: start, endDate: end)
-        let total = trip.totalDays(using: calendar)
-        if total <= 1 {
-          return "\(destination.name) · 당일치기 (\(formatter.string(from: start)))"
-        }
-        let range = "\(formatter.string(from: start)) – \(formatter.string(from: end))"
-        return "\(destination.name) · \(total - 1)박 \(total)일 (\(range))"
+        return Trip(destination: destination, startDate: start, endDate: end).summary(using: calendar)
       }
       .removeDuplicates()
+      .eraseToAnyPublisher()
+  }
+
+  /// 시작·종료일이 모두 정해졌을 때만 완료할 수 있다.
+  var canComplete: AnyPublisher<Bool, Never> {
+    Publishers.CombineLatest($rangeStart, $rangeEnd)
+      .map { $0 != nil && $1 != nil }
       .eraseToAnyPublisher()
   }
 
@@ -89,6 +88,12 @@ final class TripCalendarViewModel {
     }
 
     selectionChangedSubject.send()
+  }
+
+  /// 선택한 기간으로 새 여행을 만들어 저장소에 추가한다.
+  func complete() {
+    guard let start = rangeStart, let end = rangeEnd else { return }
+    store.add(Trip(destination: destination, startDate: start, endDate: end))
   }
 
   func goToPreviousMonth() {
